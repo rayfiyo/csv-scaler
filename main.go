@@ -10,16 +10,21 @@ import (
 	"strings"
 )
 
-// transform: 元の出力 を受け取って、新しい出力を返す関数
-func transform(y float64) float64 {
-	return y * 5 / 1024
+const (
+	// 有効数字を何桁にするか
+	sig = 4
+)
+
+// transform: スケーリング
+func transform(x, y float64) (float64, float64) {
+	return (x * 5 / 4095), (y * 5 / 1023)
 }
 
 func main() {
 	// 引数でファイル名を受け取る
 	// 指定がなければ標準入力を使う
 	var r io.Reader = os.Stdin
-	if len(os.Args) == 1 {
+	if len(os.Args) > 1 {
 		f, err := os.Open(os.Args[1])
 		if err != nil {
 			log.Fatalf("ファイルオープン失敗: %v", err)
@@ -41,21 +46,24 @@ func main() {
 			continue
 		}
 
-		// 第一カラムはそのまま文字列として出力
-		in0 := parts[0]
-
-		// 第二カラムを float64 にパース
+		// 0 列目を float64 にパース
+		x0, err := strconv.ParseFloat(parts[0], 64)
+		if err != nil {
+			log.Printf("警告: 0行目の数値変換失敗 (%q): %v\n", parts[0], err)
+			continue
+		}
+		// 1 列目を float64 にパース
 		y0, err := strconv.ParseFloat(parts[1], 64)
 		if err != nil {
-			log.Printf("警告: 数値変換失敗 (%q): %v\n", parts[1], err)
+			log.Printf("警告: 1行目の数値変換失敗 (%q): %v\n", parts[1], err)
 			continue
 		}
 
 		// 変換
-		y1 := transform(y0)
+		x1, y1 := transform(x0, y0)
 
-		// 出力（小数点の揃え に注意）
-		fmt.Printf("%s,%.1f\n", in0, y1)
+		// 有効数字 sig 桁で出力
+		fmt.Printf("%.*g,%.*g\n", sig, x1, sig, y1)
 	}
 	if err := scanner.Err(); err != nil {
 		log.Fatalf("読み込みエラー: %v", err)
