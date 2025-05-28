@@ -35,9 +35,11 @@ func main() {
 
 	scanner := bufio.NewScanner(r)
 	for scanner.Scan() {
-		line := strings.TrimSpace(scanner.Text())
+		raw := scanner.Text()
+		line := strings.TrimSpace(raw)
 		if line == "" || strings.HasPrefix(line, "#") {
-			// 空行やコメント行はスキップ
+			// 空行やコメント行はそのままにしてスキップ
+			fmt.Print(raw)
 			continue
 		}
 		parts := strings.Split(line, ",")
